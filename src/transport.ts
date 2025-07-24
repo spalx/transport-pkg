@@ -1,6 +1,6 @@
 import { TransportAdapterName, TransportAdapter } from './types/transport';
 
-export default class Transport {
+class Transport {
   private adapters: Record<string, TransportAdapter> = {};
 
   register(transportName: TransportAdapterName, adapter: TransportAdapter): void {
@@ -15,3 +15,5 @@ export default class Transport {
     return this.adapters[transportName];
   }
 }
+
+export default new Transport();
