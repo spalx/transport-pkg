@@ -1,0 +1,16 @@
+{
+  "name": "transport-pkg",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build"
+  },
+  "dependencies": {
+    "zod": "^3.25.49"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.21",
+    "typescript": "^5.3.3"
+  }
+}
