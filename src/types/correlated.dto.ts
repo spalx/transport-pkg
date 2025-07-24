@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { TransportData } from './transport';
+
 export interface CorrelatedDTO {
   correlation_id: string;
 }
@@ -7,6 +9,7 @@ export interface CorrelatedDTO {
 export interface CorrelatedRequestDTO<T = object> extends CorrelatedDTO {
   request_id?: string;
   data: T;
+  transport_data?: TransportData;
 }
 
 export interface CorrelatedResponseDTO<T = object> extends CorrelatedDTO {
