@@ -8,12 +8,14 @@ export interface CorrelatedDTO {
 
 export interface CorrelatedRequestDTO<T = object> extends CorrelatedDTO {
   request_id?: string;
+  action: string;
   data: T;
   transport_name?: TransportAdapterName;
 }
 
 export interface CorrelatedResponseDTO<T = object> extends CorrelatedDTO {
   request_id?: string;
+  action: string;
   data: T;
   status: number;
   error?: string;
@@ -32,6 +34,11 @@ export const CorrelatedRequestDTOSchema = z.object({
   .refine(val => val === undefined || val.trim() !== '', {
     message: "request_id cannot be empty",
   }),
+
+  action: z.string({
+    required_error: "action is required",
+    invalid_type_error: "action must be a string"
+  }).min(1, "action cannot be empty"),
 
   data: z.object({}).refine(val => val !== undefined, {
     message: "data is required",
