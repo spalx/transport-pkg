@@ -7,7 +7,7 @@ import {
   CorrelatedRequestDTO,
   CorrelatedResponseDTO,
   CorrelatedRequestDTOSchema,
-  Transport,
+  transportService,
   TransportAdapter
   TransportAdapterName,
 } from 'transport-pkg';
