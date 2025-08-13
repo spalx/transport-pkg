@@ -13,10 +13,7 @@ export interface CorrelatedRequestDTO<T = object> extends CorrelatedDTO {
   transport_name?: TransportAdapterName;
 }
 
-export interface CorrelatedResponseDTO<T = object> extends CorrelatedDTO {
-  request_id?: string;
-  action: string;
-  data: T;
+export interface CorrelatedResponseDTO<T = object> extends CorrelatedRequestDTO {
   status: number;
   error?: string;
 }
