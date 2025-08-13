@@ -40,4 +40,12 @@ export const CorrelatedRequestDTOSchema = z.object({
   data: z.object({}).refine(val => val !== undefined, {
     message: "data is required",
   }),
+
+  transport_name: z.string({
+    invalid_type_error: "transport_name must be a string"
+  })
+  .optional()
+  .refine(val => val === undefined || val.trim() !== '', {
+    message: "transport_name cannot be empty",
+  }),
 });
