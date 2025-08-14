@@ -13,7 +13,19 @@ export interface TransportAdapter extends IAppPkg {
   sendResponse(data: CorrelatedResponseDTO): Promise<void>;
 }
 
-export function WithTransport<TBase extends new (...args: any[]) => {}>(Base: TBase) {
+type Constructor<T = {}> = new (...args: any[]) => T;
+
+type TransportMixin = {
+  defaultTransport: TransportAdapterName | null;
+  currentTransport: TransportAdapterName | null;
+  setDefaultTransport(transport: TransportAdapterName): void;
+  usingTransport(transport: TransportAdapterName): TransportMixin;
+  getActiveTransport(): TransportAdapterName;
+};
+
+export function WithTransport<TBase extends Constructor>(
+  Base: TBase
+): TBase & Constructor<TransportMixin> {
   return class extends Base {
     public defaultTransport: TransportAdapterName | null = null;
     public currentTransport: TransportAdapterName | null = null;
@@ -25,8 +37,11 @@ export function WithTransport<TBase extends new (...args: any[]) => {}>(Base: TB
         get: (target, prop, receiver) => {
           const value = Reflect.get(target, prop, receiver);
 
-          // Wrap all methods except config methods
-          if (typeof value === "function" && prop !== "usingTransport" && prop !== "setDefaultTransport") {
+          if (
+            typeof value === "function" &&
+            prop !== "usingTransport" &&
+            prop !== "setDefaultTransport"
+          ) {
             return async (...methodArgs: any[]) => {
               try {
                 return await value.apply(target, methodArgs);
@@ -44,17 +59,19 @@ export function WithTransport<TBase extends new (...args: any[]) => {}>(Base: TB
       this.defaultTransport = transport;
     }
 
-    usingTransport(transport: TransportAdapterName): this {
+    usingTransport(transport: TransportAdapterName): TransportMixin {
       this.currentTransport = transport;
       return this;
     }
 
     getActiveTransport(): TransportAdapterName {
-      const transportName: TransportAdapterName | null = this.currentTransport ?? this.defaultTransport;
+      const transportName: TransportAdapterName | null =
+        this.currentTransport ?? this.defaultTransport;
       if (!transportName) {
-        throw new InternalServerError('There is no active transport registered');
+        throw new InternalServerError(
+          "There is no active transport registered"
+        );
       }
-
       return transportName;
     }
   };
