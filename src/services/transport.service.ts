@@ -6,21 +6,20 @@ import { TransportAdapterName, TransportAdapter } from '../types/transport';
 import { CorrelatedRequestDTO, CorrelatedResponseDTO } from '../types/correlated.dto';
 
 class TransportService implements IAppPkg {
-  private adapters: Record<string, TransportAdapter> = {};
   private transports: Record<TransportAdapterName, TransportAdapter> = {} as Record<TransportAdapterName, TransportAdapter>;
   private sendableActions: string[] = [];
   private receivableActions: Record<string, (data: CorrelatedRequestDTO) => Promise<void>> = {};
 
   async init(): Promise<void> {
-    for (const transportName in this.adapters) {
-      const adapter: TransportAdapter = this.adapters[transportName];
+    for (const transportName in this.transports) {
+      const adapter: TransportAdapter = this.transports[transportName as TransportAdapterName];
       await adapter.init?.();
     }
   }
 
   async shutdown(): Promise<void> {
-    for (const transportName in this.adapters) {
-      const adapter: TransportAdapter = this.adapters[transportName];
+    for (const transportName in this.transports) {
+      const adapter: TransportAdapter = this.transports[transportName as TransportAdapterName];
       await adapter.shutdown?.();
     }
   }
