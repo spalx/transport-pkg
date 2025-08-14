@@ -9,6 +9,7 @@ class TransportService implements IAppPkg {
   private adapters: Record<string, TransportAdapter> = {};
   private transports: Record<TransportAdapterName, TransportAdapter> = {} as Record<TransportAdapterName, TransportAdapter>;
   private sendableActions: string[] = [];
+  private receivableActions: Record<string, (data: CorrelatedRequestDTO) => CorrelatedResponseDTO> = {};
 
   async init(): Promise<void> {
     for (const transportName in this.adapters) {
@@ -39,12 +40,20 @@ class TransportService implements IAppPkg {
     this.transports[transportName] = transport;
   }
 
-  addSendableActions(sendableActions: string[]): void {
+  transportsSend(sendableActions: string[]): void {
     this.sendableActions.push(...sendableActions);
   }
 
   getSendableActions(): string[] {
     return this.sendableActions;
+  }
+
+  transportsReceive(action: string, callback: (data: CorrelatedRequestDTO) => CorrelatedResponseDTO): void {
+    this.receivableActions[action] = callback;
+  }
+
+  getReceivableActions(): Record<string, (data: CorrelatedRequestDTO) => CorrelatedResponseDTO> {
+    return this.receivableActions;
   }
 
   async send(data: CorrelatedRequestDTO, timeout?: number): Promise<CorrelatedResponseDTO> {
@@ -75,7 +84,7 @@ class TransportService implements IAppPkg {
     const response: CorrelatedResponseDTO = {
       correlation_id: data.correlation_id,
       request_id: data.request_id,
-      action: `did.${data.action}`,
+      action: data.action,
       data: data.data,
       status,
       error: errorMessage
