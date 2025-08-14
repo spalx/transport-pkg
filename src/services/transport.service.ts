@@ -9,7 +9,7 @@ class TransportService implements IAppPkg {
   private adapters: Record<string, TransportAdapter> = {};
   private transports: Record<TransportAdapterName, TransportAdapter> = {} as Record<TransportAdapterName, TransportAdapter>;
   private sendableActions: string[] = [];
-  private receivableActions: Record<string, (data: CorrelatedRequestDTO) => CorrelatedResponseDTO> = {};
+  private receivableActions: Record<string, (data: CorrelatedRequestDTO) => Promise<void>> = {};
 
   async init(): Promise<void> {
     for (const transportName in this.adapters) {
@@ -48,11 +48,11 @@ class TransportService implements IAppPkg {
     return this.sendableActions;
   }
 
-  transportsReceive(action: string, callback: (data: CorrelatedRequestDTO) => CorrelatedResponseDTO): void {
+  transportsReceive(action: string, callback: (data: CorrelatedRequestDTO) => Promise<void>): void {
     this.receivableActions[action] = callback;
   }
 
-  getReceivableActions(): Record<string, (data: CorrelatedRequestDTO) => CorrelatedResponseDTO> {
+  getReceivableActions(): Record<string, (data: CorrelatedRequestDTO) => Promise<void>> {
     return this.receivableActions;
   }
 
