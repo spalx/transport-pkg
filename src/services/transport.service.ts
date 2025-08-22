@@ -55,9 +55,9 @@ class TransportService implements IAppPkg {
     return this.receivableActions;
   }
 
-  async send(data: CorrelatedRequestDTO, timeout?: number): Promise<CorrelatedResponseDTO> {
+  async send(data: CorrelatedRequestDTO, options: Record<string, unknown>, timeout?: number): Promise<CorrelatedResponseDTO> {
     const transport: TransportAdapter = this.getTransportByName(data.transport_name);
-    return transport.send(data, timeout);
+    return transport.send(data, options, timeout);
   }
 
   async sendResponse(data: CorrelatedRequestDTO, error: unknown | null): Promise<void> {

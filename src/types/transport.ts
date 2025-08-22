@@ -8,6 +8,6 @@ export enum TransportAdapterName {
 }
 
 export interface TransportAdapter extends IAppPkg {
-  send(data: CorrelatedRequestDTO, timeout?: number): Promise<CorrelatedResponseDTO>;
+  send(data: CorrelatedRequestDTO, options: Record<string, unknown>, timeout?: number): Promise<CorrelatedResponseDTO>;
   sendResponse(data: CorrelatedResponseDTO): Promise<void>;
 }
