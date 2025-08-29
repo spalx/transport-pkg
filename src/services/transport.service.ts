@@ -89,7 +89,21 @@ class TransportService implements IAppPkg {
       error: errorMessage
     };
 
-    transport.sendResponse(response);
+    await transport.sendResponse(response);
+  }
+
+  async sendResponseForRequest(request: CorrelatedRequestDTO, responseData: object, error: unknown | null): Promise<void> {
+    const { action, data, correlation_id, request_id, transport_name } = request;
+
+    const responseRequest: CorrelatedRequestDTO = {
+      correlation_id,
+      request_id,
+      action,
+      transport_name,
+      data: responseData,
+    };
+
+    await this.sendResponse(responseRequest, error);
   }
 
   private getTransportByName(transportName: TransportAdapterName | undefined): TransportAdapter {
