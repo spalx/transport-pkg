@@ -2,24 +2,25 @@ import { ZodError } from 'zod';
 import { IAppPkg, AppRunPriority, appService } from 'app-life-cycle-pkg';
 import { InternalServerError, BaseError } from 'rest-pkg';
 
-import { TransportAdapterName, TransportAdapter } from '../types/transport';
-import { CorrelatedRequestDTO, CorrelatedResponseDTO } from '../types/correlated.dto';
+import { TransportAdapterName } from '@/types/transport';
+import TransportAdapter from '@/types/transport-adapter';
+import { CorrelatedRequestDTO, CorrelatedResponseDTO } from '@/types/correlated.dto';
 
 class TransportService implements IAppPkg {
-  private transports: Record<TransportAdapterName, TransportAdapter> = {} as Record<TransportAdapterName, TransportAdapter>;
-  private sendableActions: string[] = [];
-  private receivableActions: Record<string, (data: CorrelatedRequestDTO) => Promise<void>> = {};
+  private transports: Record<TransportAdapterName, TransportAdapter & IAppPkg> = {} as Record<TransportAdapterName, TransportAdapter & IAppPkg>;
+  private broadcastableActions: string[] = [];
+  private subscribedActions: Record<string, (data: CorrelatedRequestDTO) => Promise<void>> = {};
 
   async init(): Promise<void> {
     for (const transportName in this.transports) {
-      const adapter: TransportAdapter = this.transports[transportName as TransportAdapterName];
+      const adapter: TransportAdapter & IAppPkg = this.transports[transportName as TransportAdapterName];
       await adapter.init?.();
     }
   }
 
   async shutdown(): Promise<void> {
     for (const transportName in this.transports) {
-      const adapter: TransportAdapter = this.transports[transportName as TransportAdapterName];
+      const adapter: TransportAdapter & IAppPkg = this.transports[transportName as TransportAdapterName];
       await adapter.shutdown?.();
     }
   }
@@ -35,33 +36,38 @@ class TransportService implements IAppPkg {
     return AppRunPriority.Lowest;
   }
 
-  registerTransport(transportName: TransportAdapterName, transport: TransportAdapter): void {
+  registerTransport(transportName: TransportAdapterName, transport: TransportAdapter & IAppPkg): void {
     this.transports[transportName] = transport;
   }
 
-  transportsSend(sendableActions: string[]): void {
-    this.sendableActions.push(...sendableActions);
+  setActionsToBroadcast(broadcastableActions: string[]): void {
+    this.broadcastableActions.push(...broadcastableActions);
   }
 
-  getSendableActions(): string[] {
-    return this.sendableActions;
+  getBroadcastableActions(): string[] {
+    return this.broadcastableActions;
   }
 
-  transportsReceive(action: string, callback: (data: CorrelatedRequestDTO) => Promise<void>): void {
-    this.receivableActions[action] = callback;
+  subscribeToActions(action: string, callback: (data: CorrelatedRequestDTO) => Promise<void>): void {
+    this.subscribedActions[action] = callback;
   }
 
-  getReceivableActions(): Record<string, (data: CorrelatedRequestDTO) => Promise<void>> {
-    return this.receivableActions;
+  getSubscribedActions(): Record<string, (data: CorrelatedRequestDTO) => Promise<void>> {
+    return this.subscribedActions;
   }
 
   async send(data: CorrelatedRequestDTO, options: Record<string, unknown>, timeout?: number): Promise<CorrelatedResponseDTO> {
-    const transport: TransportAdapter = this.getTransportByName(data.transport_name);
+    const transport: TransportAdapter & IAppPkg = this.getTransportByName(data.transport_name);
     return transport.send(data, options, timeout);
   }
 
-  async sendResponse(data: CorrelatedRequestDTO, error: unknown | null): Promise<void> {
-    const transport: TransportAdapter = this.getTransportByName(data.transport_name);
+  async broadcast(data: CorrelatedRequestDTO): Promise<void> {
+    const transport: TransportAdapter & IAppPkg = this.getTransportByName(data.transport_name);
+    await transport.broadcast(data);
+  }
+
+  getResponseObject(data: CorrelatedRequestDTO, error: unknown | null): CorrelatedResponseDTO {
+    const transport: TransportAdapter & IAppPkg = this.getTransportByName(data.transport_name);
 
     let errorMessage = '';
     let status = 0;
@@ -89,10 +95,10 @@ class TransportService implements IAppPkg {
       error: errorMessage
     };
 
-    await transport.sendResponse(response);
+    return response;
   }
 
-  async sendResponseForRequest(request: CorrelatedRequestDTO, responseData: object, error: unknown | null): Promise<void> {
+  getResponseObjectForRequest(request: CorrelatedRequestDTO, responseData: object, error: unknown | null): CorrelatedResponseDTO {
     const { action, data, correlation_id, request_id, transport_name } = request;
 
     const responseRequest: CorrelatedRequestDTO = {
@@ -103,14 +109,14 @@ class TransportService implements IAppPkg {
       data: responseData,
     };
 
-    await this.sendResponse(responseRequest, error);
+    return this.getResponseObject(responseRequest, error);
   }
 
-  private getTransportByName(transportName: TransportAdapterName | undefined): TransportAdapter {
+  private getTransportByName(transportName: TransportAdapterName | undefined): TransportAdapter & IAppPkg {
     if (!transportName) {
       throw new InternalServerError(`Invalid transport name`);
     }
-    const transport: TransportAdapter | undefined = this.transports[transportName];
+    const transport: TransportAdapter & IAppPkg | undefined = this.transports[transportName];
     if (!transport) {
       throw new InternalServerError(`${transportName} transport not registered`);
     }
