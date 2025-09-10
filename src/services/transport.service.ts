@@ -2,9 +2,9 @@ import { ZodError } from 'zod';
 import { IAppPkg, AppRunPriority, appService } from 'app-life-cycle-pkg';
 import { InternalServerError, BaseError } from 'rest-pkg';
 
-import { TransportAdapterName } from '@/types/transport';
-import TransportAdapter from '@/types/transport-adapter';
-import { CorrelatedRequestDTO, CorrelatedResponseDTO } from '@/types/correlated.dto';
+import { TransportAdapterName } from '../types/transport';
+import TransportAdapter from '../types/transport-adapter';
+import { CorrelatedRequestDTO, CorrelatedResponseDTO } from '../types/correlated.dto';
 
 class TransportService implements IAppPkg {
   private transports: Record<TransportAdapterName, TransportAdapter & IAppPkg> = {} as Record<TransportAdapterName, TransportAdapter & IAppPkg>;

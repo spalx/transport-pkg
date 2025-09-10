@@ -1,6 +1,6 @@
 import { InternalServerError } from 'rest-pkg';
 
-import { TransportAdapterName } from '@/types/transport';
+import { TransportAdapterName } from '../types/transport';
 
 abstract class TransportAwareService {
   public currentTransport: TransportAdapterName | null = null;
