@@ -1,6 +1,6 @@
 {
   "name": "transport-pkg",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "app-life-cycle-pkg": "git+git@github.com:spalx/app-life-cycle-pkg.git#1.0.5",
-    "rest-pkg": "git+git@github.com:spalx/rest-pkg.git#1.0.1",
+    "rest-pkg": "git+git@github.com:spalx/rest-pkg.git#1.0.3",
     "zod": "^3.25.49"
   },
   "devDependencies": {

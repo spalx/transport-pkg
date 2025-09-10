@@ -1,6 +1,6 @@
 import { ZodError } from 'zod';
 import { IAppPkg, AppRunPriority, appService } from 'app-life-cycle-pkg';
-import { InternalServerError, BaseError } from 'rest-pkg';
+import { BadRequestError, InternalServerError, BaseError } from 'rest-pkg';
 
 import { TransportAdapterName } from '../types/transport';
 import TransportAdapter from '../types/transport-adapter';
@@ -9,7 +9,8 @@ import { CorrelatedRequestDTO, CorrelatedResponseDTO } from '../types/correlated
 class TransportService implements IAppPkg {
   private transports: Record<TransportAdapterName, TransportAdapter & IAppPkg> = {} as Record<TransportAdapterName, TransportAdapter & IAppPkg>;
   private broadcastableActions: string[] = [];
-  private subscribedActions: Record<string, (data: CorrelatedRequestDTO) => Promise<void>> = {};
+  private subscribedBroadcastableActions: Record<string, (data: CorrelatedRequestDTO) => Promise<void>> = {};
+  private actionHandlers: Record<string, (data: CorrelatedRequestDTO) => Promise<CorrelatedResponseDTO>> = {};
 
   async init(): Promise<void> {
     for (const transportName in this.transports) {
@@ -48,12 +49,20 @@ class TransportService implements IAppPkg {
     return this.broadcastableActions;
   }
 
-  subscribeToActions(action: string, callback: (data: CorrelatedRequestDTO) => Promise<void>): void {
-    this.subscribedActions[action] = callback;
+  subscribeToBroadcastableAction(action: string, callback: (data: CorrelatedRequestDTO) => Promise<void>): void {
+    this.subscribedBroadcastableActions[action] = callback;
   }
 
-  getSubscribedActions(): Record<string, (data: CorrelatedRequestDTO) => Promise<void>> {
-    return this.subscribedActions;
+  getSubscribedBroadcastableActions(): Record<string, (data: CorrelatedRequestDTO) => Promise<void>> {
+    return this.subscribedBroadcastableActions;
+  }
+
+  setActionHandler(action: string, handler: (data: CorrelatedRequestDTO) => Promise<CorrelatedResponseDTO>): void {
+    this.actionHandlers[action] = handler;
+  }
+
+  getActionHandlers(): Record<string, (data: CorrelatedRequestDTO) => Promise<CorrelatedResponseDTO>> {
+    return this.actionHandlers;
   }
 
   async send(data: CorrelatedRequestDTO, options: Record<string, unknown>, timeout?: number): Promise<CorrelatedResponseDTO> {
@@ -62,6 +71,10 @@ class TransportService implements IAppPkg {
   }
 
   async broadcast(data: CorrelatedRequestDTO): Promise<void> {
+    if (!this.broadcastableActions.includes(data.action)) {
+      throw new BadRequestError(`Invalid action provided: ${data.action}`);
+    }
+
     const transport: TransportAdapter & IAppPkg = this.getTransportByName(data.transport_name);
     await transport.broadcast(data);
   }
