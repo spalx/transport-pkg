@@ -1,9 +1,9 @@
 import { IAppPkg, AppRunPriority, appService } from 'app-life-cycle-pkg';
-import { BadRequestError } from 'rest-pkg';
+import { BadRequestError, throwErrorForStatus } from 'rest-pkg';
 
 import { TransportAdapterName } from '../types/transport';
 import TransportAdapter from '../transport-adapter';
-import { CorrelatedMessage } from '../correlated-message';
+import { CorrelatedMessage, ErroMessageData } from '../correlated-message';
 
 class TransportService implements IAppPkg {
   private transports: Record<TransportAdapterName, TransportAdapter & IAppPkg> = {} as Record<TransportAdapterName, TransportAdapter & IAppPkg>;
@@ -66,7 +66,14 @@ class TransportService implements IAppPkg {
 
   async send(req: CorrelatedMessage, options: Record<string, unknown>, timeout?: number): Promise<CorrelatedMessage> {
     const transport: TransportAdapter & IAppPkg = this.getTransportByName(req.transport);
-    return transport.send(req, options, timeout);
+    const response: CorrelatedMessage = await transport.send(req, options, timeout);
+
+    if (response.isError()) {
+      const error: ErroMessageData = response.data;
+      throwErrorForStatus(error.code, error.message);
+    }
+
+    return response;
   }
 
   async broadcast(req: CorrelatedMessage): Promise<void> {

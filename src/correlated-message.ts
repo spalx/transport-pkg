@@ -3,8 +3,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { BadRequestError, BaseError } from 'rest-pkg';
 
 export class ErroMessageData {
-  public status: number = 0;
-  public error: string = '';
+  public code: number = 0;
+  public message: string = '';
 
   constructor(init?: Partial<ErroMessageData>) {
     if (init) {
@@ -38,20 +38,20 @@ export class CorrelatedMessage<T = object> {
     msg.transport = transport;
 
     if (error) {
-      let status = 500;
+      let code = 500;
       let errorMessage = 'Internal Server Error';
 
       if (error instanceof ZodError) {
-        status = 400;
+        code = 400;
         errorMessage = error.errors.map(e => e.message).join(', ');
       } else if (error instanceof BaseError) {
-        status = error.code;
+        code = error.code;
         errorMessage = error.message;
       } else if (error instanceof Error) {
         errorMessage = error.message;
       }
 
-      msg.data = new ErroMessageData({ status, error: errorMessage });
+      msg.data = new ErroMessageData({ code, message: errorMessage });
     } else {
       msg.data = data ?? {} as T;
     }
@@ -90,7 +90,7 @@ export class CorrelatedMessage<T = object> {
     message.action = raw.action;
     message.transport = raw.transport;
 
-    if ('status' in raw.data && 'error' in raw.data) {
+    if ('code' in raw.data && 'message' in raw.data) {
       message.data = new ErroMessageData(raw.data) as unknown as T;
     } else {
       message.data = raw.data;
