@@ -1,13 +1,13 @@
 import { InternalServerError } from 'rest-pkg';
 
-import { CorrelatedRequestDTO, CorrelatedResponseDTO } from './correlated.dto';
+import { CorrelatedMessage } from './correlated-message';
 
 abstract class TransportAdapter {
-  async send(data: CorrelatedRequestDTO, options: Record<string, unknown>, timeout?: number): Promise<CorrelatedResponseDTO> {
+  async send(req: CorrelatedMessage, options: Record<string, unknown>, timeout?: number): Promise<CorrelatedMessage> {
     throw new InternalServerError('Transport does not support "send" method');
   }
 
-  async broadcast(data: CorrelatedRequestDTO): Promise<void> {
+  async broadcast(req: CorrelatedMessage): Promise<void> {
     throw new InternalServerError('Transport does not support "broadcast" method');
   }
 }

@@ -1,4 +1,4 @@
-import { InternalServerError } from 'rest-pkg';
+import { BadRequestError } from 'rest-pkg';
 
 import { TransportAdapterName } from '../types/transport';
 
@@ -14,7 +14,7 @@ abstract class TransportAwareService {
   getActiveTransport(): TransportAdapterName {
     const transportName: TransportAdapterName | null = this.currentTransport;
     if (!transportName) {
-      throw new InternalServerError('There is no active transport. Set transport via useTransport() method.');
+      throw new BadRequestError('There is no active transport. Set transport via useTransport() method.');
     }
     return transportName;
   }

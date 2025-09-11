@@ -1,16 +1,15 @@
-import { ZodError } from 'zod';
 import { IAppPkg, AppRunPriority, appService } from 'app-life-cycle-pkg';
-import { BadRequestError, InternalServerError, BaseError } from 'rest-pkg';
+import { BadRequestError } from 'rest-pkg';
 
 import { TransportAdapterName } from '../types/transport';
-import TransportAdapter from '../types/transport-adapter';
-import { CorrelatedRequestDTO, CorrelatedResponseDTO } from '../types/correlated.dto';
+import TransportAdapter from '../transport-adapter';
+import { CorrelatedMessage } from '../correlated-message';
 
 class TransportService implements IAppPkg {
   private transports: Record<TransportAdapterName, TransportAdapter & IAppPkg> = {} as Record<TransportAdapterName, TransportAdapter & IAppPkg>;
   private broadcastableActions: string[] = [];
-  private subscribedBroadcastableActions: Record<string, (data: CorrelatedRequestDTO) => Promise<void>> = {};
-  private actionHandlers: Record<string, (data: CorrelatedRequestDTO) => Promise<object>> = {};
+  private subscribedBroadcastableActions: Record<string, (req: CorrelatedMessage) => Promise<void>> = {};
+  private actionHandlers: Record<string, (req: CorrelatedMessage) => Promise<object>> = {};
 
   async init(): Promise<void> {
     for (const transportName in this.transports) {
@@ -49,89 +48,43 @@ class TransportService implements IAppPkg {
     return this.broadcastableActions;
   }
 
-  subscribeToBroadcastableAction(action: string, callback: (data: CorrelatedRequestDTO) => Promise<void>): void {
+  subscribeToBroadcastableAction(action: string, callback: (req: CorrelatedMessage) => Promise<void>): void {
     this.subscribedBroadcastableActions[action] = callback;
   }
 
-  getSubscribedBroadcastableActions(): Record<string, (data: CorrelatedRequestDTO) => Promise<void>> {
+  getSubscribedBroadcastableActions(): Record<string, (req: CorrelatedMessage) => Promise<void>> {
     return this.subscribedBroadcastableActions;
   }
 
-  setActionHandler(action: string, handler: (data: CorrelatedRequestDTO) => Promise<object>): void {
+  setActionHandler(action: string, handler: (req: CorrelatedMessage) => Promise<object>): void {
     this.actionHandlers[action] = handler;
   }
 
-  getActionHandlers(): Record<string, (data: CorrelatedRequestDTO) => Promise<object>> {
+  getActionHandlers(): Record<string, (req: CorrelatedMessage) => Promise<object>> {
     return this.actionHandlers;
   }
 
-  async send(data: CorrelatedRequestDTO, options: Record<string, unknown>, timeout?: number): Promise<CorrelatedResponseDTO> {
-    const transport: TransportAdapter & IAppPkg = this.getTransportByName(data.transport_name);
-    return transport.send(data, options, timeout);
+  async send(req: CorrelatedMessage, options: Record<string, unknown>, timeout?: number): Promise<CorrelatedMessage> {
+    const transport: TransportAdapter & IAppPkg = this.getTransportByName(req.transport);
+    return transport.send(req, options, timeout);
   }
 
-  async broadcast(data: CorrelatedRequestDTO): Promise<void> {
-    if (!this.broadcastableActions.includes(data.action)) {
-      throw new BadRequestError(`Invalid action provided: ${data.action}`);
+  async broadcast(req: CorrelatedMessage): Promise<void> {
+    if (!this.broadcastableActions.includes(req.action)) {
+      throw new BadRequestError(`Invalid action provided: ${req.action}`);
     }
 
-    const transport: TransportAdapter & IAppPkg = this.getTransportByName(data.transport_name);
-    await transport.broadcast(data);
+    const transport: TransportAdapter & IAppPkg = this.getTransportByName(req.transport);
+    await transport.broadcast(req);
   }
 
-  getResponseObject(data: CorrelatedRequestDTO, error: unknown | null): CorrelatedResponseDTO {
-    const transport: TransportAdapter & IAppPkg = this.getTransportByName(data.transport_name);
-
-    let errorMessage = '';
-    let status = 0;
-    if (error !== null) {
-      status = 500;
-      errorMessage = 'Internal Server Error';
-
-      if (error instanceof ZodError) {
-        status = 400;
-        errorMessage = error.errors.map(e => e.message).join(', ');
-      } else if (error instanceof BaseError) {
-        status = error.code;
-        errorMessage = error.message;
-      } else if (error instanceof Error) {
-        errorMessage = error.message;
-      }
+  private getTransportByName(transportName: string): TransportAdapter & IAppPkg {
+    if (!transportName || !(transportName in TransportAdapterName)) {
+      throw new BadRequestError(`Invalid transport name`);
     }
-
-    const response: CorrelatedResponseDTO = {
-      correlation_id: data.correlation_id,
-      request_id: data.request_id,
-      action: data.action,
-      data: data.data,
-      status,
-      error: errorMessage
-    };
-
-    return response;
-  }
-
-  getResponseObjectForRequest(request: CorrelatedRequestDTO, responseData: object, error: unknown | null): CorrelatedResponseDTO {
-    const { action, data, correlation_id, request_id, transport_name } = request;
-
-    const responseRequest: CorrelatedRequestDTO = {
-      correlation_id,
-      request_id,
-      action,
-      transport_name,
-      data: responseData,
-    };
-
-    return this.getResponseObject(responseRequest, error);
-  }
-
-  private getTransportByName(transportName: TransportAdapterName | undefined): TransportAdapter & IAppPkg {
-    if (!transportName) {
-      throw new InternalServerError(`Invalid transport name`);
-    }
-    const transport: TransportAdapter & IAppPkg | undefined = this.transports[transportName];
+    const transport: TransportAdapter & IAppPkg | undefined = this.transports[transportName as TransportAdapterName];
     if (!transport) {
-      throw new InternalServerError(`${transportName} transport not registered`);
+      throw new BadRequestError(`${transportName} transport not registered`);
     }
 
     return transport;

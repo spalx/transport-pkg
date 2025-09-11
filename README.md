@@ -4,9 +4,8 @@
 
 ```ts
 import {
-  CorrelatedRequestDTO,
-  CorrelatedResponseDTO,
-  CorrelatedRequestDTOSchema,
+  CorrelatedMessage,
+  ErroMessageData,
   transportService,
   TransportAdapter
   TransportAdapterName,
