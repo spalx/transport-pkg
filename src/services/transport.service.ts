@@ -1,4 +1,4 @@
-import { IAppPkg, AppRunPriority, appService } from 'app-life-cycle-pkg';
+import { IAppPkg, AppRunPriority } from 'app-life-cycle-pkg';
 import { BadRequestError, throwErrorForStatus } from 'rest-pkg';
 
 import { TransportAdapterName } from '../types/transport';
@@ -11,11 +11,8 @@ class TransportService implements IAppPkg {
   private subscribedBroadcastableActions: Record<string, (req: CorrelatedMessage) => Promise<void>> = {};
   private actionHandlers: Record<string, (req: CorrelatedMessage) => Promise<object>> = {};
 
-  used(): void {
-    const keys: TransportAdapterName[] = Object.keys(this.transports) as TransportAdapterName[];
-    for (const transportName of keys) {
-      appService.use(this.transports[transportName]); // Chain transports to the app life cycle
-    }
+  getName(): string {
+    return 'transport';
   }
 
   getPriority(): number {
