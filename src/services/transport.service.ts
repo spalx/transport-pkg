@@ -11,20 +11,6 @@ class TransportService implements IAppPkg {
   private subscribedBroadcastableActions: Record<string, (req: CorrelatedMessage) => Promise<void>> = {};
   private actionHandlers: Record<string, (req: CorrelatedMessage) => Promise<object>> = {};
 
-  async init(): Promise<void> {
-    for (const transportName in this.transports) {
-      const adapter: TransportAdapter & IAppPkg = this.transports[transportName as TransportAdapterName];
-      await adapter.init?.();
-    }
-  }
-
-  async shutdown(): Promise<void> {
-    for (const transportName in this.transports) {
-      const adapter: TransportAdapter & IAppPkg = this.transports[transportName as TransportAdapterName];
-      await adapter.shutdown?.();
-    }
-  }
-
   used(): void {
     const keys: TransportAdapterName[] = Object.keys(this.transports) as TransportAdapterName[];
     for (const transportName of keys) {
@@ -33,7 +19,7 @@ class TransportService implements IAppPkg {
   }
 
   getPriority(): number {
-    return AppRunPriority.Lowest;
+    return AppRunPriority.Highest;
   }
 
   registerTransport(transportName: TransportAdapterName, transport: TransportAdapter & IAppPkg): void {
