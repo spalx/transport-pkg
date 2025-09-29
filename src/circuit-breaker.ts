@@ -1,3 +1,5 @@
+import { InternalServerError } from 'rest-pkg';
+
 import { CircuitBreakerOptions } from './types/circuit-breaker';
 
 enum CircuitState {
@@ -24,7 +26,7 @@ export default class CircuitBreaker<TArgs extends any[], TResult> {
       if (Date.now() - this.lastOpened > this.options.retryTimeout) {
         this.transitionTo(CircuitState.HalfOpen);
       } else {
-        throw new Error('CircuitBreaker: open');
+        throw new InternalServerError('CircuitBreaker: open');
       }
     }
 
