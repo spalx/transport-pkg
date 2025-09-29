@@ -74,7 +74,7 @@ export default class CircuitBreaker<TArgs extends any[], TResult> {
 
   private async callWithTimeout(args: TArgs): Promise<TResult> {
     return new Promise<TResult>((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error('Timeout')), this.options.timeout);
+      const timer = setTimeout(() => reject(new InternalServerError('CircuitBreaker timeout')), this.options.timeout);
 
       this.action(...args).then((res) => {
         clearTimeout(timer);
