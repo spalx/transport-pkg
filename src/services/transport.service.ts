@@ -47,9 +47,9 @@ class TransportService implements IAppPkg {
     return this.actionHandlers;
   }
 
-  async send(req: CorrelatedMessage, options: Record<string, unknown>, timeout?: number): Promise<CorrelatedMessage> {
+  async send(req: CorrelatedMessage, options: Record<string, unknown>): Promise<CorrelatedMessage> {
     const transport: TransportAdapter & IAppPkg = this.getTransportByName(req.transport);
-    const response: CorrelatedMessage = await transport.send(req, options, timeout);
+    const response: CorrelatedMessage = await transport.send(req, options);
 
     if (response.isError()) {
       const error: ErroMessageData = response.data;
