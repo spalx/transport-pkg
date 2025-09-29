@@ -6,7 +6,7 @@ enum CircuitState {
   HalfOpen = 'HalfOpen',
 }
 
-export class CircuitBreaker<TArgs extends any[], TResult> {
+export default class CircuitBreaker<TArgs extends any[], TResult> {
   private state: CircuitState = CircuitState.Closed;
   private failures = 0;
   private successes = 0;
