@@ -43,7 +43,7 @@ export class CorrelatedMessage<T = object> {
 
       if (error instanceof ZodError) {
         code = 400;
-        errorMessage = error.errors.map(e => e.message).join(', ');
+        errorMessage = error.issues.map(iss => iss.message).join(', ');
       } else if (error instanceof BaseError) {
         code = error.code;
         errorMessage = error.message;

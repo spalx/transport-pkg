@@ -1,19 +1,19 @@
 {
   "name": "transport-pkg",
-  "version": "1.1.7",
+  "version": "1.1.8",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
     "prepare": "npm run build"
   },
   "dependencies": {
-    "app-life-cycle-pkg": "git+git@github.com:spalx/app-life-cycle-pkg.git#1.0.6",
-    "rest-pkg": "git+git@github.com:spalx/rest-pkg.git#1.0.3",
+    "app-life-cycle-pkg": "git+git@github.com:spalx/app-life-cycle-pkg.git#1.0.7",
+    "rest-pkg": "git+git@github.com:spalx/rest-pkg.git#1.0.4",
     "uuid": "^13.0.0",
-    "zod": "^3.25.49"
+    "zod": "^4.1.12"
   },
   "devDependencies": {
-    "@types/node": "^22.15.21",
-    "typescript": "^5.3.3"
+    "@types/node": "^24.7.0",
+    "typescript": "^5.9.3"
   }
 }
