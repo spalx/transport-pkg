@@ -1,4 +1,4 @@
-import { InternalServerError } from 'rest-pkg';
+import { BaseError, InternalServerError } from 'rest-pkg';
 
 import { CircuitBreakerOptions } from './types/circuit-breaker';
 
@@ -41,9 +41,11 @@ export default class CircuitBreaker<TArgs extends any[], TResult> {
 
       return result;
     } catch (err) {
-      this.failures++;
-      if (this.state === CircuitState.HalfOpen || this.getFailureRate() >= this.options.errorThresholdPercentage) {
-        this.transitionTo(CircuitState.Open);
+      if (!(err instanceof BaseError)) {
+        this.failures++;
+        if (this.state === CircuitState.HalfOpen || this.getFailureRate() >= this.options.errorThresholdPercentage) {
+          this.transitionTo(CircuitState.Open);
+        }
       }
 
       throw err;
