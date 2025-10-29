@@ -44,14 +44,13 @@ class BroadcastWaiter {
     this.pending.set(key, { callback, timeoutHandle });
   }
 
-  /**
-   * Resolves a pending broadcast by invoking its callback.
-   */
   async resolve(req: CorrelatedMessage): Promise<void> {
     const key = this.buildKey(req.action, req.correlation_id);
     const pending = this.pending.get(key);
 
-    if (!pending) return;
+    if (!pending) {
+      return;
+    }
 
     clearTimeout(pending.timeoutHandle);
     this.pending.delete(key);
@@ -60,7 +59,6 @@ class BroadcastWaiter {
       await pending.callback(req);
     } catch (err) {
       // prevent unhandled errors from breaking the loop
-      console.error(`Error executing broadcast callback:`, err);
     }
   }
 
